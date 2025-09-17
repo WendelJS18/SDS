@@ -1,0 +1,5 @@
+Sync_*.csv
+sds_output_*/
+
+__pycache__/
+*.pyc
