@@ -72,13 +72,13 @@ df_aluno.dropna(subset=['NumeroMatricula', 'NomeCompleto', 'EscolaID', 'NomeSeri
 df_aula.dropna(subset=['CodigoProfessor', 'EscolaID', 'NomeSerie', 'NomeTurma'], inplace=True)
 print("Limpeza inicial dos dados de origem concluída.")
 
-# 2. Geração de usernames (agora opera sobre dados já limpos)
+# 2. Geração de usernames 
 df_professores['username'] = df_professores['NomeFuncionario'].apply(lambda x: preencher_email(x, DOMINIO_PROF))
 df_aluno['username'] = df_aluno['NomeCompleto'].apply(lambda x: preencher_email(x, DOMINIO_ALUNO))
 df_professores.dropna(subset=['username'], inplace=True)
 df_aluno.dropna(subset=['username'], inplace=True)
 
-# 3. Geração de IDs e tratamento de homônimos (agora opera sobre dados limpos)
+# 3. Geração de IDs e tratamento de homônimos 
 df_professores['sourcedId'] = 'PROF_' + df_professores['CodigoFuncionario']
 df_aluno['sourcedId'] = 'ALUNO_' + df_aluno['NumeroMatricula']
 
@@ -134,10 +134,10 @@ ano_letivo_padrao = df_aluno['AnoLetivo'].mode()[0]
 df_turmas_mestra['AnoLetivo'].fillna(ano_letivo_padrao, inplace=True)
 df_turmas_mestra.reset_index(drop=True, inplace=True)
 
-# 5. Com a lista mestra agora limpa e completa, gera o arquivo classes.csv
+# gera o arquivo classes.csv
 df_turmas_mestra['orgSourcedId'] = df_turmas_mestra['EscolaID'].map(map_org)
 df_turmas_mestra['title'] = df_turmas_mestra['NomeTurma'] + ' - ' + df_turmas_mestra['NomeSerie'] + ' ' + df_turmas_mestra['AnoLetivo']
-# O sourcedId da turma é simplesmente o CodigoTurma do SIS, como descobrimos.
+#
 df_turmas_mestra['sourcedId'] = df_turmas_mestra['CodigoTurma']
 
 df_classes_final = df_turmas_mestra[['sourcedId', 'title', 'orgSourcedId']]
@@ -147,12 +147,12 @@ print(f"'classes.csv' gerado -> {len(df_classes_final)} registros.")
 # Gerando enrollments.csv
 map_turmas = df_turmas_mestra[['EscolaID', 'CodigoTurma', 'sourcedId']].rename(columns={'sourcedId': 'classSourcedId'})
 
-# Matrículas de alunos
-# A junção é feita pela chaves: EscolaID e CodigoTurma
+
+
 enroll_alunos = pd.merge(df_aluno, map_turmas, on=['EscolaID', 'CodigoTurma'])
 enroll_alunos = enroll_alunos[['sourcedId', 'classSourcedId']].rename(columns={'sourcedId': 'userSourcedId'}).assign(role='student')
 
-# Matrículas de professores
+
 map_profs = df_professores[['CodigoFuncionario', 'sourcedId']].rename(columns={'sourcedId': 'userSourcedId'})
 enroll_profs = pd.merge(df_aula, map_profs, left_on='CodigoProfessor', right_on='CodigoFuncionario')
 enroll_profs = pd.merge(enroll_profs, map_turmas, on=['EscolaID', 'CodigoTurma'])
